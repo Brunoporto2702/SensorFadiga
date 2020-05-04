@@ -62,12 +62,12 @@ def arquivo_sensor_fadiga(video_arquivo):
     # ipCamera = "192.168.1.101"                      #//For Camera in the same wifi that MyMax
     # rtsp = "rtsp://admin:Jacare123$@" + ipCamera + ":554/cam/realmonitor?channel=1&subtype=0"
     # vs = WebcamVideoStream(src=rtsp).start()  #CAMERA EXTERNA                              
-    vs = WebcamVideoStream(src=0).start()    #CAMERA DO PC
+    # vs = WebcamVideoStream(src=0).start()    #CAMERA DO PC
 
-    # vs = FileVideoStream(video_arquivo).start()  #ARQUIVO DE VIDEO
-    # cap = cv2.VideoCapture(video_arquivo)
+    vs = FileVideoStream(video_arquivo).start()  #ARQUIVO DE VIDEO
+    cap = cv2.VideoCapture(video_arquivo)
 
-    # num_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))         #limite de analise total
+    num_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))         #limite de analise total
     parte1 = 301
     parte2 = 601
     frames_calibracao = parte2-1        #depois definimos para analisar corretamente
@@ -126,8 +126,19 @@ def arquivo_sensor_fadiga(video_arquivo):
             if fps._numFrames <= frames_calibracao:
                 Tempo_calibra.append(str(datetime.now()))
                 Ears_calibra.append(round(ear,3))
-                EYE_AR_THRESH = np.nanmean(Ears_calibra[:fps._numFrames])-np.nanstd(Ears_calibra[:fps._numFrames])*1.9  #Corte de piscada 
+                # EYE_AR_THRESH = np.nanmean(Ears_calibra[:fps._numFrames])-np.nanstd(Ears_calibra[:fps._numFrames])*1.9  #Corte de piscada 
                 YAWN_THRESH = 25
+
+                mediana_calibração = np.median(Ears_calibra)
+                EYE_AR_THRESH = 0.5*mediana_calibração
+
+                #filtro de média no EAR 
+                # lista_ear_atual = add_new_ear(lista_ear_atual,ear)
+                # media = calcula_media(lista_ear_atual)
+                # print(f'média EAR (0 - 1): {media}')
+                # print(f'mediana EAR (0 - 1): {mediana_calibração}')
+
+                
             
             #PÓS CALIBRADO
             elif fps._numFrames > frames_calibracao:      
@@ -155,30 +166,30 @@ def arquivo_sensor_fadiga(video_arquivo):
                 cv2.putText(frame, "Piscadas Demoradas: {}".format(len(tempos_cochilando)), (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
                 #BOCA
-                if (distance > YAWN_THRESH):
-                    #entrada do bocejo
-                    if flag6 == 0:
-                        flag6 = 1
-                        start_bocejo = datetime.now().time()      
-                    #durante o bocejo
-                    bocejo_duracao_now = ((((datetime.now().time().hour-start_bocejo.hour) * 60 + (datetime.now().time().minute-start_bocejo.minute)) * 60 + (datetime.now().time().second-start_bocejo.second))*(10^6) + start_bocejo.microsecond)
-                    if bocejo_duracao_now > 2000000 and bocejo_duracao_now < 5000000: # entre 2 e 5 segundos
-                        estado_bocejo_normal = 1
-                        print('Bocejo duração normal: {}'.format(round(bocejo_duracao,3)))
-                    if bocejo_duracao_now > 5000000: # 5 segundos
-                        estado_bocejo_normal = 0
-                        print('Bocejo duração grande: {}'.format(round(bocejo_duracao,3)))
+                # if (distance > YAWN_THRESH):
+                #     #entrada do bocejo
+                #     if flag6 == 0:
+                #         flag6 = 1
+                #         start_bocejo = datetime.now().time()      
+                #     #durante o bocejo
+                #     bocejo_duracao_now = ((((datetime.now().time().hour-start_bocejo.hour) * 60 + (datetime.now().time().minute-start_bocejo.minute)) * 60 + (datetime.now().time().second-start_bocejo.second))*(10^6) + start_bocejo.microsecond)
+                #     if bocejo_duracao_now > 2000000 and bocejo_duracao_now < 5000000: # entre 2 e 5 segundos
+                #         estado_bocejo_normal = 1
+                #         print('Bocejo duração normal: {}'.format(round(bocejo_duracao,3)))
+                #     if bocejo_duracao_now > 5000000: # 5 segundos
+                #         estado_bocejo_normal = 0
+                #         print('Bocejo duração grande: {}'.format(round(bocejo_duracao,3)))
                 #saída do bocejo
-                if (distance < YAWN_THRESH) and flag6 == 1:
-                    bocejo_duracao = ((((datetime.now().time().hour-start_bocejo.hour) * 60 + (datetime.now().time().minute-start_bocejo.minute)) * 60 + (datetime.now().time().second-start_bocejo.second))*(10^6) + start_bocejo.microsecond)
-                    flag6 = 0
-                    if estado_bocejo_normal == 1:
-                        Bocejo_normal.append(bocejo_duracao)
-                    if estado_bocejo_normal == 0:
-                        Bocejo_pesado.append(bocejo_duracao)
+                # if (distance < YAWN_THRESH) and flag6 == 1:
+                #     bocejo_duracao = ((((datetime.now().time().hour-start_bocejo.hour) * 60 + (datetime.now().time().minute-start_bocejo.minute)) * 60 + (datetime.now().time().second-start_bocejo.second))*(10^6) + start_bocejo.microsecond)
+                #     flag6 = 0
+                #     if estado_bocejo_normal == 1:
+                #         Bocejo_normal.append(bocejo_duracao)
+                #     if estado_bocejo_normal == 0:
+                #         Bocejo_pesado.append(bocejo_duracao)
 
-                print(f'média EAR (0 - 1): {media}')
-                # print(f'EAR (0 - 1): {ear}')
+                # print(f'média EAR (0 - 1): {media}')
+                print(f'EAR (0 - 1): {ear}')
                 # print(f'PERCLOS EAR (0 - 1): {PERCLOS_EAR}')
                 # # print(f'PERCLOS time (0 - 1): {PERCLOS_time}')
                 # print(f'Número de piscadas: {len(tempos_piscada)}')
@@ -192,7 +203,9 @@ def arquivo_sensor_fadiga(video_arquivo):
 
 
                 ###################################################################################################
+            
             #PERCLOS time
+            # ear = media
             if ear <= 0.8:
                 #entrada do blink em 80%
                 if piscou1 == 0:
@@ -298,5 +311,5 @@ def arquivo_sensor_fadiga(video_arquivo):
     return (categoria, porcentagem)
 
 
-arquivo = '/Volumes/ESDISO/Rebeca/Minimo Videos/Fold1_part1/Fold1_part1/01/5.mov'
+arquivo = 'Dataset/01/5.mov'
 arquivo_sensor_fadiga(arquivo)

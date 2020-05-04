@@ -1,2 +1,4 @@
 env-sensorfadiga/
 Dataset/
+.vscode/launch.json
+.vscode/settings.json
