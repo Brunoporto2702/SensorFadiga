@@ -48,6 +48,15 @@ def calcula_ear_porcentagem(ear, max_olhoaberto, min_olhofechado):
     ear_porcentagem = 100 * (ear - min_olhofechado)/(max_olhoaberto-min_olhofechado)
     return ear_porcentagem
 
+def add_new_ear(lista_ear_atual,ear):
+    lista_ear_atual.append(round(ear,3))
+    lista_ear_atual = lista_ear_atual[1:3]
+    return lista_ear_atual
+
+def calcula_media(lista_ear_atual):
+    media = np.nanmean(lista_ear_atual)
+    return media
+
 def arquivo_sensor_fadiga(video_arquivo):
     detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")   
     predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
@@ -56,18 +65,18 @@ def arquivo_sensor_fadiga(video_arquivo):
     # ipCamera = "192.168.1.101"                      #//For Camera in the same wifi that MyMax
     # rtsp = "rtsp://admin:Jacare123$@" + ipCamera + ":554/cam/realmonitor?channel=1&subtype=0"
     # vs = WebcamVideoStream(src=rtsp).start()  #CAMERA EXTERNA                              
-    vs = WebcamVideoStream(src=0).start()    #CAMERA DO PC
+    # vs = WebcamVideoStream(src=0).start()    #CAMERA DO PC
 
-    # vs = FileVideoStream(video_arquivo).start()  #ARQUIVO DE VIDEO
-    # cap = cv2.VideoCapture(video_arquivo)
+    vs = FileVideoStream(video_arquivo).start()  #ARQUIVO DE VIDEO
+    cap = cv2.VideoCapture(video_arquivo)
 
-    # num_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))         #limite de analise total
+    num_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))         #limite de analise total
     parte1 = 301
     parte2 = 601
     frames_calibracao = parte2-1        #depois definimos para analisar corretamente
 
     #JUNÇÃO DOS DADOS
-    lista_ear_atual = [0]*3
+    lista_ear_atual = [0]*2
     Tempo = [] #*
     Ears = [] #*
     Tempo_calibra = []
@@ -128,7 +137,11 @@ def arquivo_sensor_fadiga(video_arquivo):
             
             #PÓS CALIBRADO
             elif fps._numFrames > frames_calibracao:      
-                ear_porcentagem = calcula_ear_porcentagem(ear, max_olhoaberto, min_olhofechado)
+                #filtro de média no EAR 
+                lista_ear_atual = add_new_ear(lista_ear_atual,ear)
+                media = calcula_media(lista_ear_atual)
+                
+                ear_porcentagem = calcula_ear_porcentagem(media, max_olhoaberto, min_olhofechado)
 
                 calibrado = 1
                 Tempo.append(str(datetime.now().time().hour) +':'+ str(datetime.now().time().minute) +':'+ str(datetime.now().time().second) +':'+ str(datetime.now().time().microsecond))
@@ -140,6 +153,7 @@ def arquivo_sensor_fadiga(video_arquivo):
                 EYE_AR_THRESH_calibra2=np.nanmean(Ears_calibra[parte1:parte2])-np.nanstd(Ears_calibra[parte1:parte2])*1.9
                 EYE_AR_THRESH = (EYE_AR_THRESH_calibra1 + EYE_AR_THRESH_calibra2)/2 #ajuste do corte 
                 YAWN_THRESH = 25                         
+
 
                 #PERCLOS EAR = PERCLOS
                 PERCLOS_EAR = round((((np.nanmean(Ears_calibra)+np.nanstd(Ears_calibra))-round(ear,3))/((np.nanmean(Ears_calibra)+np.nanstd(Ears_calibra)) - np.nanmin(Ears_calibra))),3) #depois de calibrar pode-se analisar
@@ -173,7 +187,8 @@ def arquivo_sensor_fadiga(video_arquivo):
 
                 # print(f'média EAR (0 - 1): {media}')
                 print(f'EAR porcentagem (0 - 1): {ear_porcentagem}')
-                print(f'EAR: {ear}')
+                print(f'EAR media: {media}')
+                # print(f'EAR: {ear}')
                 # print(f'PERCLOS EAR (0 - 1): {PERCLOS_EAR}')
                 # # print(f'PERCLOS time (0 - 1): {PERCLOS_time}')
                 # print(f'Número de piscadas: {len(tempos_piscada)}')
@@ -295,5 +310,5 @@ def arquivo_sensor_fadiga(video_arquivo):
     return (categoria, porcentagem)
 
 
-arquivo = 'Dataset/Fold1_part1/Fold1_part1/01/5.mov'
+arquivo = 'Dataset/02/5.MOV'
 arquivo_sensor_fadiga(arquivo)
