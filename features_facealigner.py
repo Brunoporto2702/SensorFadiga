@@ -49,7 +49,8 @@ def calcula_ear_porcentagem(ear, max_olhoaberto, min_olhofechado):
     return ear_porcentagem
 
 def arquivo_sensor_fadiga(video_arquivo):
-    detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")   
+    # detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml") 
+    detector = dlib.get_frontal_face_detector()  
     predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
     # fa = FaceAligner(predictor, desiredFaceWidth=256)
 
@@ -97,18 +98,19 @@ def arquivo_sensor_fadiga(video_arquivo):
         # print(num_frames)
         frame = vs.read()
         frame = imutils.resize(frame, width=300, height=300) ## 200 X 200 FPS=60 SEM VIDEO TEMPO REAL
-        rects = detector.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=10, minSize=(50, 50),flags=cv2.CASCADE_SCALE_IMAGE)
+        # rects = detector.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=10, minSize=(50, 50),flags=cv2.CASCADE_SCALE_IMAGE)
+        rects = detector(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), 0)
         if rects == ():
             falha+=1
             frame = imutils.rotate(frame, 270)    #arquivo de video
-        rects = detector.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=10, minSize=(50, 50),flags=cv2.CASCADE_SCALE_IMAGE)
+        # rects = detector.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=10, minSize=(50, 50),flags=cv2.CASCADE_SCALE_IMAGE)
+        rects = detector(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), 0)
         # print(rects)
-        for (x, y, w, h) in rects:
-            rect = dlib.rectangle(int(x), int(y), int(x + w),int(y + h))
-
+        for rect in rects:
+            # rect = dlib.rectangle(int(x), int(y), int(x + w),int(y + h))
             # frame = fa.align(frame, cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), rect)
-
-            shape = predictor(frame, rect)
+            
+            shape = predictor(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), rect)
             shape = face_utils.shape_to_np(shape)
             eye = final_ear(shape)
             ear = eye[0]
