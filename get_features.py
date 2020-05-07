@@ -12,6 +12,9 @@ import pandas as pd
 from imutils import face_utils
 from imutils.face_utils import FaceAligner
 from imutils.face_utils import rect_to_bb
+from skimage.morphology import reconstruction
+from pyexcelerate import Workbook
+
 
 def distancia_dos_labios(formato_rosto):
     labio_superior = formato_rosto[50:53]
@@ -90,15 +93,11 @@ def desenha_rosto(rosto, frame):
     labio = rosto['formato'][48:60] #desenhar
     cv2.drawContours(frame, [labio], -1, (0, 255, 0), 1) #desenhar
 
-def export_to_csv(df):
-    # exporta para xlsx
-    from pyexcelerate import Workbook
-
+def exporta_para_xlsx(df):
     values = [df.columns] + list(df.values)
     wb = Workbook()
     wb.new_sheet('df', data=values)
     wb.save('df.xlsx')
-    
 
 def calcula_ear_porcentagem(ear, max_olhoaberto, min_olhofechado):
     ear_porcentagem = 100 * (ear - min_olhofechado)/(max_olhoaberto-min_olhofechado)
@@ -107,7 +106,6 @@ def calcula_ear_porcentagem(ear, max_olhoaberto, min_olhofechado):
 def add_new_ear(lista_ear_atual,ear):    
     lista_ear_atual.append(round(ear,3))
     lista_ear_atual = lista_ear_atual[1:4]
-    print(len(lista_ear_atual))
     return lista_ear_atual
 
 def calcula_media(lista_ear_atual):
@@ -120,6 +118,25 @@ def calcula_piscadas_por_min(lista_piscadas, num_frames_por_min):
     piscadas_no_ultimo_min = lista_piscadas[(len(lista_piscadas) - num_frames_por_min):] 
     taxa_piscadas_por_min = (max(piscadas_no_ultimo_min) - min(piscadas_no_ultimo_min))
     return taxa_piscadas_por_min 
+
+plt.style.use('ggplot')
+def grafico_em_tempo_real(x_vec,y1_data,plot,identifier='',pause_time=0.1):
+    if plot==[]:
+        # this is the call to matplotlib that allows dynamic plotting
+        plt.ion()
+        fig = plt.figure(figsize=(13,6))
+        ax = fig.add_subplot(111)
+        # create a variable for the line so we can later update it
+        plot, = ax.plot(x_vec,y1_data,'-o',alpha=0.8)        
+        #update plot label/title
+        plt.ylabel('Y Label')
+        plt.title('Title: {}'.format(identifier))
+        plt.show()
+    plot.set_ydata(y1_data)
+    if np.min(y1_data)<=plot.axes.get_ylim()[0] or np.max(y1_data)>=plot.axes.get_ylim()[1]:
+        plt.ylim([np.min(y1_data)-np.std(y1_data),np.max(y1_data)+np.std(y1_data)])
+    plt.pause(pause_time)
+    return plot
 
 detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
 predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
@@ -145,6 +162,8 @@ piscadas = 0
 piscadas_por_min = []
 lista_piscadas = []
 
+plot = []
+EARs = [0]*1000
 
 # while True: # for frame in video 
 for i in range(4000):
@@ -200,12 +219,12 @@ for i in range(4000):
                 'piscadas':piscadas,
                 'piscadas_por_min_atual': piscadas_por_min_atual,
                 }
+            
+            EARs = EARs[1:]
+            EARs.append(ear)
+            plot = grafico_em_tempo_real(range(600,1600), EARs, plot, identifier='', pause_time=0.1)
+
             resultados.append(resultado) 
-        
-
-
-        
-
         
     cv2.imshow('Camera', frame)
     cv2.waitKey(1)
@@ -216,8 +235,6 @@ for index, coluna in enumerate(df.columns):
     plt.subplot(2,3,index+1)
     plt.plot(range(len(df[coluna].values)), df[coluna].values)
     plt.title(coluna)
-
 plt.show()
     
-#exporta para o csv    
-export_to_csv(df)
+exporta_para_xlsx(df)
