@@ -12,6 +12,8 @@ import pandas as pd
 from imutils import face_utils
 from imutils.face_utils import FaceAligner
 from imutils.face_utils import rect_to_bb
+from matplotlib.animation import FuncAnimation
+
 
 def distancia_dos_labios(formato_rosto):
     labio_superior = formato_rosto[50:53]
@@ -86,7 +88,7 @@ def calcula_ear_porcentagem(ear, max_olhoaberto, min_olhofechado):
 
 def add_new_ear(lista_ear_atual,ear):
     lista_ear_atual.append(round(ear,3))
-    lista_ear_atual = lista_ear_atual[1:3]
+    lista_ear_atual = lista_ear_atual[1:10]
     return lista_ear_atual
 
 def calcula_media(lista_ear_atual):
@@ -102,6 +104,33 @@ def calcula_piscadas_por_min(lista_piscadas, num_frames_por_min):
     taxa_piscadas = (max(piscadas_no_ultimo_min) - min(piscadas_no_ultimo_min))
 
     return taxa_piscadas
+
+def plot_real_time(x_vec,y1_data,line1,identifier='',pause_time=0.1):
+    if line1==[]:
+        # this is the call to matplotlib that allows dynamic plotting
+        plt.ion()
+        fig = plt.figure(figsize=(13,6))
+        ax = fig.add_subplot(111)
+        # create a variable for the line so we can later update it
+        line1, = ax.plot(x_vec,y1_data,'-o',alpha=0.8)        
+        #update plot label/title
+        plt.ylabel('Y Label')
+        plt.title('Title: {}'.format(identifier))
+        plt.show()
+    
+    # after the figure, axis, and line are created, we only need to update the y-data
+    line1.set_ydata(x_vec,y1_data)
+    # adjust limits if new data goes beyond bounds
+    if np.min(y1_data)<=line1.axes.get_ylim()[0] or np.max(y1_data)>=line1.axes.get_ylim()[1]:
+        plt.ylim([np.min(y1_data)-np.std(y1_data),np.max(y1_data)+np.std(y1_data)])
+    # this pauses the data so the figure/axis can catch up - the amount of pause can be altered above
+    plt.pause(pause_time)
+    
+    # return line so we can update it again in the next iteration
+    return line1
+line1 = []
+
+
 
 detector = dlib.get_frontal_face_detector()  
 predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
@@ -119,7 +148,7 @@ calibrado = False
 limite_frames_calibracao = 600
 
 lista_ear_calibracao = []
-lista_ear_atual = [0]*3
+lista_ear_atual = [0]*10
 YAWN_THRESH = 25
 
 piscando = False
@@ -130,7 +159,7 @@ lista_piscadas = []
 frames = []
 
 # while True: # for frame in video 
-for i in range(5000):
+for i in range(2000):
     frame = video.read()
     frame = imutils.resize(frame, width=300, height=300)
 
@@ -148,7 +177,7 @@ for i in range(5000):
         lista_ear_calibracao.append(ear_filtrado)
         max_olhoaberto = np.median(lista_ear_calibracao)
         min_olhofechado = min(lista_ear_calibracao)
-        EYE_AR_THRESH = 0.5*max_olhoaberto
+        EYE_AR_THRESH = 0.8*max_olhoaberto
     
     elif fps._numFrames >= limite_frames_calibracao:
         #calcula features
@@ -185,7 +214,15 @@ for i in range(5000):
             'piscadas_por_min_atual': piscadas_por_min_atual,
             }
         resultados.append(resultado) 
-        
+
+        fig1 = plt.figure()
+
+        # plot_real_time(range(len(resultados)), [x['ear_filtrado'] for x in resultados])
+        line1 = plot_real_time(range(len(resultados)), [x['ear_filtrado'] for x in resultados],line1)
+        # ani = FuncAnimation(plt.gcf(), plot_real_time(i, range(len(resultados)), [x['ear_filtrado'] for x in resultados]), interval = 2)
+        # ani = FuncAnimation(plt.gcf(), plot_real_time, fargs=(range(len(resultados)), [x['ear_filtrado'] for x in resultados],))
+        # ani = FuncAnimation(fig1, plot_real_time)
+        # plt.show()
 
 
         
