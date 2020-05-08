@@ -14,7 +14,7 @@ from imutils.face_utils import FaceAligner
 from imutils.face_utils import rect_to_bb
 from skimage.morphology import reconstruction
 from pyexcelerate import Workbook
-
+import traceback
 
 def distancia_dos_labios(formato_rosto):
     labio_superior = formato_rosto[50:53]
@@ -59,10 +59,6 @@ def detecta_rosto(frame, predictor, detector):
         frame = frame[y:y+h,x:x+w] #corta frame
         frame = imutils.resize(frame, width=300, height=300) #resize frame
         retangulo_face = dlib.rectangle(0, 0, 300, 300) #pega o tamanho 
-        
-        #sem selecionar roi - com haar cascade
-        # (x,y,w,h) = retangulos_em_volta_da_face[0]
-        # retangulo_face = dlib.rectangle(x, y, x+w, y+h)
 
         formato_rosto = predictor(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), retangulo_face)
         formato_rosto = face_utils.shape_to_np(formato_rosto)
@@ -99,142 +95,50 @@ def exporta_para_xlsx(df):
     wb.new_sheet('df', data=values)
     wb.save('df.xlsx')
 
-def calcula_ear_porcentagem(ear, max_olhoaberto, min_olhofechado):
-    ear_porcentagem = 100 * (ear - min_olhofechado)/(max_olhoaberto-min_olhofechado)
-    return ear_porcentagem
-
-def add_new_ear(lista_ear_atual,ear):    
-    lista_ear_atual.append(round(ear,3))
-    lista_ear_atual = lista_ear_atual[1:4]
-    return lista_ear_atual
-
-def calcula_media(lista_ear_atual):
-    media = np.nanmean(lista_ear_atual)
-    return media
-
-def calcula_piscadas_por_min(lista_piscadas, num_frames_por_min):
-    if len(lista_piscadas) < num_frames_por_min:
-        num_frames_por_min = len(lista_piscadas)
-    piscadas_no_ultimo_min = lista_piscadas[(len(lista_piscadas) - num_frames_por_min):] 
-    taxa_piscadas_por_min = (max(piscadas_no_ultimo_min) - min(piscadas_no_ultimo_min))
-    return taxa_piscadas_por_min 
-
-plt.style.use('ggplot')
-def grafico_em_tempo_real(x_vec,y1_data,plot,identifier='',pause_time=0.1):
-    if plot==[]:
-        # this is the call to matplotlib that allows dynamic plotting
-        plt.ion()
-        fig = plt.figure(figsize=(13,6))
-        ax = fig.add_subplot(111)
-        # create a variable for the line so we can later update it
-        plot, = ax.plot(x_vec,y1_data,'-o',alpha=0.8)        
-        #update plot label/title
-        plt.ylabel('Y Label')
-        plt.title('Title: {}'.format(identifier))
-        plt.show()
-    plot.set_ydata(y1_data)
-    if np.min(y1_data)<=plot.axes.get_ylim()[0] or np.max(y1_data)>=plot.axes.get_ylim()[1]:
-        plt.ylim([np.min(y1_data)-np.std(y1_data),np.max(y1_data)+np.std(y1_data)])
-    plt.pause(pause_time)
-    return plot
-
 detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
 predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
 
 path_to_video = 'Dataset/02/0.mov'
 video = FileVideoStream(path_to_video).start()
-fps_video_rate = 25 # constante para o caso de vídeo
-
-# video = WebcamVideoStream(src=0).start()    #CAMERA DO PC
-fps = FPS().start()         #começa a contar o tempo de teste
 
 resultados = []
+try:
+    while True: # for frame in video 
+        frame = video.read()
+        frame = imutils.resize(frame, width=300, height=300)
 
-calibrado = False
-limite_frames_calibracao = 600
+        frame, rosto = detecta_rosto(frame, predictor, detector)  #detecta rosto
+        if rosto != None:
+            # desenha_rosto(rosto, frame)  #desenha rosto
+            ear = rosto['ear']
+            distancia_entre_os_labios = rosto['distancia_entre_os_labios']
+        else:
+            ear = -1
+            distancia_entre_os_labios = -1
 
-lista_ear_calibracao = []
-lista_ear_atual = [0]*3
-YAWN_THRESH = 25
+        print('ear: {}'.format(ear))
+        print('distancia_entre_os_labios: {}'.format(distancia_entre_os_labios))
+        print('\n\n')
 
-piscando = False
-piscadas = 0
-piscadas_por_min = []
-lista_piscadas = []
+        resultado = {
+            'ear': ear,
+            'distancia_entre_os_labios': distancia_entre_os_labios
+            }
 
-plot = []
-EARs = [0]*1000
-
-# while True: # for frame in video 
-for i in range(4000):
-    frame = video.read()
-    frame = imutils.resize(frame, width=300, height=300)
-
-    frame, rosto = detecta_rosto(frame, predictor, detector)  #detecta rosto
-    if rosto != None:
-        desenha_rosto(rosto, frame)  #desenha rosto
-        ear = rosto['ear']
-
-        lista_ear_atual = add_new_ear(lista_ear_atual,ear)
-        ear_filtrado = calcula_media(lista_ear_atual)
-        
-
-        if fps._numFrames < limite_frames_calibracao:
-            lista_ear_calibracao.append(ear_filtrado)
-            max_olhoaberto = np.median(lista_ear_calibracao)
-            min_olhofechado = min(lista_ear_calibracao)
-            EYE_AR_THRESH = 0.7*max_olhoaberto
-        
-        elif fps._numFrames >= limite_frames_calibracao:
-            #calcula features
-            ear_porcentagem = calcula_ear_porcentagem(ear_filtrado, max_olhoaberto, min_olhofechado)
-
-            if ear_filtrado < EYE_AR_THRESH and not piscando:
-                piscadas += 1
-                piscando = True
-            elif ear_filtrado > EYE_AR_THRESH and piscando:
-                piscando = False
-
-            num_frames_por_min = 60*fps_video_rate
-
-            if fps._numFrames % num_frames_por_min == 0:
-                piscadas_por_min.append(piscadas)
+        resultados.append(resultado) 
             
-            lista_piscadas.append(piscadas)
-            piscadas_por_min_atual = calcula_piscadas_por_min(lista_piscadas, num_frames_por_min)
+        # cv2.imshow('Camera', frame)
+        # cv2.waitKey(1)
 
-            print('Piscadas total: {}'.format(piscadas))
-            print('lista piscadas por min: {}'.format(piscadas_por_min))
-            print('piscadas por min atual: {}'.format(piscadas_por_min_atual))
-            print('ear %: {}'.format(ear_porcentagem))
-            print('ear: {}'.format(ear_filtrado))
-            print('\n\n')
-
-
-            resultado = {
-                'ear_porcentagem': ear_porcentagem, 
-                'ear_filtrado': ear_filtrado, 
-                'ear': ear,
-                'EYE_AR_THRESH': EYE_AR_THRESH,
-                'piscadas':piscadas,
-                'piscadas_por_min_atual': piscadas_por_min_atual,
-                }
-            
-            EARs = EARs[1:]
-            EARs.append(ear)
-            plot = grafico_em_tempo_real(range(600,1600), EARs, plot, identifier='', pause_time=0.1)
-
-            resultados.append(resultado) 
-        
-    cv2.imshow('Camera', frame)
-    cv2.waitKey(1)
-    fps.update()
+except Exception as e:
+    print(e)
+    traceback.print_exc()
 
 df = pd.DataFrame(resultados)
 for index, coluna in enumerate(df.columns):
-    plt.subplot(2,3,index+1)
+    plt.subplot(2,1,index+1)
     plt.plot(range(len(df[coluna].values)), df[coluna].values)
     plt.title(coluna)
 plt.show()
-    
+
 exporta_para_xlsx(df)
