@@ -193,7 +193,7 @@ for i in range(4000):
                 piscadas += 1
                 piscando = True
             elif ear_filtrado > EYE_AR_THRESH and piscando:
-                piscando = False
+                piscando = False 
 
             num_frames_por_min = 60*fps_video_rate
 
