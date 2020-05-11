@@ -1,18 +1,12 @@
-from imutils.video import WebcamVideoStream                                
-from imutils.video import FPS   
-from imutils.video import FileVideoStream                                            
 import imutils
+from imutils.video import FileVideoStream
 import matplotlib.pyplot as plt
-from datetime import datetime
 from scipy.spatial import distance as dist
 import numpy as np
 import dlib
 import cv2
 import pandas as pd
 from imutils import face_utils
-from imutils.face_utils import FaceAligner
-from imutils.face_utils import rect_to_bb
-from skimage.morphology import reconstruction
 from pyexcelerate import Workbook
 import traceback
 
@@ -95,50 +89,52 @@ def exporta_para_xlsx(df):
     wb.new_sheet('df', data=values)
     wb.save('df.xlsx')
 
-detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
-predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
+def plot_graph(df):
+    for index, coluna in enumerate(df.columns):
+        plt.subplot(2,1,index+1)
+        plt.plot(range(len(df[coluna].values)), df[coluna].values)
+        plt.title(coluna)
+    plt.show()
 
-path_to_video = 'Dataset/02/0.mov'
-video = FileVideoStream(path_to_video).start()
+def arquivo_features(path_to_video, nome_video):
+    detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+    predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
 
-resultados = []
-try:
-    while True: # for frame in video 
-        frame = video.read()
-        frame = imutils.resize(frame, width=300, height=300)
+    video = FileVideoStream(path_to_video).start()
 
-        frame, rosto = detecta_rosto(frame, predictor, detector)  #detecta rosto
-        if rosto != None:
-            # desenha_rosto(rosto, frame)  #desenha rosto
-            ear = rosto['ear']
-            distancia_entre_os_labios = rosto['distancia_entre_os_labios']
-        else:
-            ear = -1
-            distancia_entre_os_labios = -1
+    resultados = [{'ear': '', 'distancia_entre_os_labios': '', 'nome_video': ''}] #pular a primeira linha
+    try:
+        while True: # for frame in video 
+            frame = video.read()
+            frame = imutils.resize(frame, width=300, height=300)
 
-        print('ear: {}'.format(ear))
-        print('distancia_entre_os_labios: {}'.format(distancia_entre_os_labios))
-        print('\n\n')
+            frame, rosto = detecta_rosto(frame, predictor, detector)  #detecta rosto
+            if rosto != None:
+                # desenha_rosto(rosto, frame)  #desenha rosto
+                ear = rosto['ear']
+                distancia_entre_os_labios = rosto['distancia_entre_os_labios']
+            else:
+                ear = -1
+                distancia_entre_os_labios = -1
 
-        resultado = {
-            'ear': ear,
-            'distancia_entre_os_labios': distancia_entre_os_labios
-            }
+            # print('ear: {}'.format(ear))
+            # print('distancia_entre_os_labios: {}'.format(distancia_entre_os_labios))
+            # print('\n\n')
 
-        resultados.append(resultado) 
-            
-        # cv2.imshow('Camera', frame)
-        # cv2.waitKey(1)
+            resultado = {
+                'ear': ear,
+                'distancia_entre_os_labios': distancia_entre_os_labios,
+                'nome_video': nome_video
+                }
 
-except Exception as e:
-    print(e)
-    traceback.print_exc()
+            resultados.append(resultado) 
+                
+            # cv2.imshow('Camera', frame)
+            # cv2.waitKey(1)
 
-df = pd.DataFrame(resultados)
-for index, coluna in enumerate(df.columns):
-    plt.subplot(2,1,index+1)
-    plt.plot(range(len(df[coluna].values)), df[coluna].values)
-    plt.title(coluna)
-plt.show()
+    except Exception as e:
+        print(e)
+        # traceback.print_exc()
 
-exporta_para_xlsx(df)
+    df = pd.DataFrame(resultados)
+    return df
