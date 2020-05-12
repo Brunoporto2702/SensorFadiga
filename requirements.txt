@@ -46,8 +46,4 @@ typed-ast==1.4.1
 urllib3==1.25.9
 virtualenv==20.0.20
 wrapt==1.12.1
-<<<<<<< HEAD
 zipp==3.1.0
-=======
-zipp==3.1.0
->>>>>>> 2bab420074394c43a4bbcecb734f0ff464045d96
