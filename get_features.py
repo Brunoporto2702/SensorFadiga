@@ -95,7 +95,7 @@ def plot_graph(df):
         plt.plot(range(len(df[coluna].values)), df[coluna].values)
         plt.title(coluna)
     plt.show()
-
+ 
 def arquivo_features(path_to_video, nome_video):
     detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
     predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
