@@ -95,6 +95,7 @@ def exporta_para_xlsx(df):
     wb.new_sheet('df', data=values)
     wb.save('df.xlsx')
 
+<<<<<<< HEAD
 detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
 predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
 
@@ -124,6 +125,18 @@ try:
             'ear': ear,
             'distancia_entre_os_labios': distancia_entre_os_labios
             }
+=======
+def plot_graph(df):
+    for index, coluna in enumerate(df.columns):
+        plt.subplot(2,1,index+1)
+        plt.plot(range(len(df[coluna].values)), df[coluna].values)
+        plt.title(coluna)
+    plt.show()
+ 
+def arquivo_features(path_to_video, nome_video):
+    detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+    predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
+>>>>>>> 12a8b3d6866fdebb58fe423e8077c51de987edd9
 
         resultados.append(resultado) 
             
