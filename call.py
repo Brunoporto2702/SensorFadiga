@@ -1,10 +1,8 @@
-from get_features import arquivo_features
+from Video_Resultado_2 import arquivo_sensor_fadiga
 from pathlib import Path
 import pandas as pd
-import numpy as np
-import traceback
 
-entries = Path('/Volumes/ESDISO/Rebeca/Dataset/')
+entries = Path('Dataset/')
 for entry in entries.iterdir():
 	if entry.name.find(".")<0:
 		entries_1 = Path(entry)
@@ -17,9 +15,14 @@ for entry in entries.iterdir():
 						for entry_3 in entries_3.iterdir():
 							if entry_3.name.find(".DS_Store")<0:
 								entries_4 = Path(entry_3)
-								palavras = str(entry_3).split('/')
-								nome_video = palavras[-2]+'/'+palavras[-1]
 
+<<<<<<< HEAD
+								csv = pd.read_csv("results.csv", sep=',', encoding = "ISO-8859-1")
+								print(str(entries_4), list(csv['arquivo']))
+								if str(entries_4) not in list(csv['arquivo']):
+									categoria, porcentagem = arquivo_sensor_fadiga(str(entries_4))
+									print('Conclusão: {0} com {1:2f} %'.format(categoria, porcentagem))
+=======
 								csv = pd.read_csv("results.csv", usecols=[0,1,2], sep=';', encoding = "ISO-8859-1")
 								csv = csv.dropna(axis=0, how='any') #retirando linhas NaN
 								lista_nome_video = np.unique(csv['nome_video'])
@@ -32,3 +35,4 @@ for entry in entries.iterdir():
 										print(e) 
 										# traceback.print_exc()
 									
+>>>>>>> 12a8b3d6866fdebb58fe423e8077c51de987edd9
