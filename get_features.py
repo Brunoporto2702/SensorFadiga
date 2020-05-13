@@ -116,7 +116,7 @@ def arquivo_features(path_to_video, nome_video):
 
             frame, rosto = detecta_rosto(frame, predictor, detector)  #detecta rosto
             if rosto != None:
-                # desenha_rosto(rosto, frame)  #desenha rosto
+                desenha_rosto(rosto, frame)  #desenha rosto
                 ear = rosto['ear']
                 distancia_entre_os_labios = rosto['distancia_entre_os_labios']
             else:
@@ -132,12 +132,10 @@ def arquivo_features(path_to_video, nome_video):
                 'distancia_entre_os_labios': distancia_entre_os_labios
                 }
 
-    
-
             resultados.append(resultado) 
                 
-            # cv2.imshow('Camera', frame)
-            # cv2.waitKey(1)
+            cv2.imshow('Camera', frame)
+            cv2.waitKey(1)
 
     except Exception as e:
         print(e)
@@ -145,3 +143,5 @@ def arquivo_features(path_to_video, nome_video):
 
     df = pd.DataFrame(resultados)
     return df
+
+df = arquivo_features('/Volumes/ESDISO/Rebeca/Dataset/Fold2_part1/Fold2_part1/14/0.mp4','14/0.mp4')
