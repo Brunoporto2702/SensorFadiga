@@ -51,7 +51,15 @@ def detecta_rosto(frame, predictor, detector):
         frame = cv2.putText(frame, "falha", (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
         frame = imutils.rotate(frame, 270)
         retangulos_em_volta_da_face = detector.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=10, minSize=(50, 50),flags=cv2.CASCADE_SCALE_IMAGE)
-   
+        if len(retangulos_em_volta_da_face) == 0:
+            frame = cv2.putText(frame, "falha", (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            frame = imutils.rotate(frame, 90)
+            retangulos_em_volta_da_face = detector.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=10, minSize=(50, 50),flags=cv2.CASCADE_SCALE_IMAGE)
+            if len(retangulos_em_volta_da_face) == 0:
+                frame = cv2.putText(frame, "falha", (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                frame = imutils.rotate(frame, 180)
+                retangulos_em_volta_da_face = detector.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=10, minSize=(50, 50),flags=cv2.CASCADE_SCALE_IMAGE)
+
     #detecta o rosto
     try:
         #selecionar roi - com haar cascade
@@ -123,9 +131,9 @@ def arquivo_features(path_to_video, nome_video):
                 ear = -1
                 distancia_entre_os_labios = -1
 
-            print('ear: {}'.format(ear))
-            print('distancia_entre_os_labios: {}'.format(distancia_entre_os_labios))
-            print('\n\n')
+            # print('ear: {}'.format(ear))
+            # print('distancia_entre_os_labios: {}'.format(distancia_entre_os_labios))
+            # print('\n\n')
 
             resultado = {
                 'ear': ear,
@@ -144,4 +152,4 @@ def arquivo_features(path_to_video, nome_video):
     df = pd.DataFrame(resultados)
     return df
 
-df = arquivo_features('/Volumes/ESDISO/Rebeca/Dataset/Fold2_part1/Fold2_part1/14/0.mp4','14/0.mp4')
+#df = arquivo_features('D:/Rebeca/Dataset/Fold2_part1/Fold2_part1/14/0.mp4','14/0.mp4')
