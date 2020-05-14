@@ -25,8 +25,13 @@ for entry in entries.iterdir():
 								print(nome_video, lista_nome_video)
 								if nome_video not in lista_nome_video:
 									try: #ele lê uns arquivos estranhos como 55/._10.mp4 que nao devem ser considerados
-										df = arquivo_features(str(entries_4), nome_video) 
-										df.to_csv('results.csv', sep=';', index = False, mode='a', header=False)
+										df = arquivo_features(str(entries_4), nome_video)
+										df.query("ear!=-1" and "distancia_entre_os_labios!=-1", inplace=True) 
+										print(df.shape)
+										if df.shape[0]>200:
+											df.to_csv('results.csv', sep=';', index = False, mode='a', header=False)
+										else:
+											print(nome_video)
 									except Exception as e:
 										print(e) 
 										# traceback.print_exc()
