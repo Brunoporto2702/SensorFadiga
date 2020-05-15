@@ -130,7 +130,7 @@ def arquivo_features(path_to_video, nome_video):
             print('\n\n')
 
             resultado = {
-                'ear': ear,
+                'ear': ear, 
                 'distancia_entre_os_labios': distancia_entre_os_labios
                 }
         resultados.append(resultado) 

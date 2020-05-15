@@ -26,5 +26,5 @@ for entry in entries.iterdir():
 										df.to_csv('results.csv', sep=';', index = False, mode='a', header=False)
 									except Exception as e:
 										print(e) 
-										# traceback.print_exc()
+										# traceback.print_exc() 
 									
