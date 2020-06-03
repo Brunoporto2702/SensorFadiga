@@ -7,6 +7,7 @@ from datetime import datetime
 from scipy.spatial import distance as dist
 import numpy as np
 import dlib
+#import cvlib as cv
 import cv2
 import pandas as pd
 from imutils import face_utils
@@ -43,28 +44,51 @@ def calcula_ear(formato_rosto):
     ear = (ear_olho_esquerdo + ear_olho_direito) / 2.0
     return (ear, olho_esquerdo, olho_direito)
 
-def detecta_rosto(frame, predictor, detector):
-    retangulos_em_volta_da_face = detector.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=10, minSize=(50, 50),flags=cv2.CASCADE_SCALE_IMAGE)
-
+def detecta_rosto(frame, predictor, detector, haar, nome_video):
+    rect = haar.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=10, minSize=(50, 50),flags=cv2.CASCADE_SCALE_IMAGE)
+    retangulos_em_volta_da_face = detector(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), 0)
+    
     #verifica se precisa rotacionar
-    if len(retangulos_em_volta_da_face) == 0:
+    if nome_video == '14/0.mp4':
+        frame = cv2.putText(frame, "falha", (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        frame = imutils.rotate(frame, 90)
+        rect = haar.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=10, minSize=(50, 50),flags=cv2.CASCADE_SCALE_IMAGE)
+        retangulos_em_volta_da_face = detector(frame, 1)
+
+    elif len(rect) == 0:
         frame = cv2.putText(frame, "falha", (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
         frame = imutils.rotate(frame, 270)
-        retangulos_em_volta_da_face = detector.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=10, minSize=(50, 50),flags=cv2.CASCADE_SCALE_IMAGE)
-        if len(retangulos_em_volta_da_face) == 0:
+        rect = haar.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=10, minSize=(50, 50),flags=cv2.CASCADE_SCALE_IMAGE)
+        retangulos_em_volta_da_face = detector(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), 0)
+        if len(rect) == 0:
             frame = cv2.putText(frame, "falha", (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             frame = imutils.rotate(frame, 90)
-            retangulos_em_volta_da_face = detector.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=10, minSize=(50, 50),flags=cv2.CASCADE_SCALE_IMAGE)
-            if len(retangulos_em_volta_da_face) == 0:
+            rect = haar.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=10, minSize=(50, 50),flags=cv2.CASCADE_SCALE_IMAGE)
+            retangulos_em_volta_da_face = detector(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), 0)
+            if len(rect) == 0:
                 frame = cv2.putText(frame, "falha", (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
                 frame = imutils.rotate(frame, 180)
-                retangulos_em_volta_da_face = detector.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=10, minSize=(50, 50),flags=cv2.CASCADE_SCALE_IMAGE)
-
+                rect = haar.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=10, minSize=(50, 50),flags=cv2.CASCADE_SCALE_IMAGE)
+                retangulos_em_volta_da_face = detector(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), 0)
+                
     #detecta o rosto
     try:
+        #selecionar roi - com dlib CNN
+        #rects = dlib.rectangles()
+        #rects.extend([d.rect for d in retangulos_em_volta_da_face])
+        face = retangulos_em_volta_da_face[0]
+        x = face.rect.left()
+        y = face.rect.top()
+        w = face.rect.right() - x
+        h = face.rect.bottom() - y
+        confidence = face.confidence
+
         #selecionar roi - com haar cascade
-        (x,y,w,h) = retangulos_em_volta_da_face[0] #posicao rosto detectado
+        #(x,y,w,h) = retangulos_em_volta_da_face[0] #posicao rosto detectado
         frame = frame[y:y+h,x:x+w] #corta frame
+        cv2.imshow('Camera', frame)
+        cv2.waitKey(1)
+        
         frame = imutils.resize(frame, width=300, height=300) #resize frame
         retangulo_face = dlib.rectangle(0, 0, 300, 300) #pega o tamanho 
 
@@ -111,7 +135,11 @@ def exporta_para_xlsx(df):
     wb.save('df.xlsx')
 
 def arquivo_features(path_to_video, nome_video):
-    detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+    haar = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+    #detector = dlib.get_frontal_face_detector()
+    detector = dlib.cnn_face_detection_model_v1('mmod_human_face_detector.dat')
+    #detector = 
+
     predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
     
     video = FileVideoStream(path_to_video).start()
@@ -122,7 +150,7 @@ def arquivo_features(path_to_video, nome_video):
             frame = video.read()
             frame = imutils.resize(frame, width=300, height=300)
 
-            frame, rosto = detecta_rosto(frame, predictor, detector)  #detecta rosto
+            frame, rosto = detecta_rosto(frame, predictor, detector, haar, nome_video)  #detecta rosto
             if rosto != None:
                 desenha_rosto(rosto, frame)  #desenha rosto
                 ear = rosto['ear']
@@ -141,7 +169,7 @@ def arquivo_features(path_to_video, nome_video):
                 }
 
             resultados.append(resultado) 
-            
+                
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
 
@@ -150,8 +178,6 @@ def arquivo_features(path_to_video, nome_video):
         traceback.print_exc()
 
     df = pd.DataFrame(resultados)
-    plot_graph(df)
-    
     return df
 
-df = arquivo_features('D:/Rebeca/Dataset/Fold2_part1/Fold2_part1/14/10.mp4','14/10.mp4')
+df = arquivo_features('D:/Rebeca/Dataset/Fold2_part1/Fold2_part1/14/0.mp4','14/0.mp4')
