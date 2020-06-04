@@ -141,7 +141,7 @@ def grafico_em_tempo_real(x_vec,y1_data,plot,identifier='',pause_time=0.1):
 detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
 predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
 
-path_to_video = 'Dataset/02/0.mov'
+path_to_video = 'D:/Rebeca/Dataset/Fold2_part1/Fold2_part1/14/10.mp4'
 video = FileVideoStream(path_to_video).start()
 fps_video_rate = 25 # constante para o caso de vídeo
 

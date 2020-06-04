@@ -312,5 +312,5 @@ def arquivo_sensor_fadiga(video_arquivo):
     return (categoria, porcentagem)
 
 
-arquivo = 'Dataset/02/0.mov'
+arquivo = 'D:/Rebeca/Dataset/Fold2_part1/Fold2_part1/14/10.mp4'
 arquivo_sensor_fadiga(arquivo)
