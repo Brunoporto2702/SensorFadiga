@@ -141,7 +141,7 @@ def arquivo_features(path_to_video, nome_video):
                 }
 
             resultados.append(resultado) 
-                
+            
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
 
@@ -150,6 +150,8 @@ def arquivo_features(path_to_video, nome_video):
         traceback.print_exc()
 
     df = pd.DataFrame(resultados)
+    plot_graph(df)
+    
     return df
 
-#df = arquivo_features('D:/Rebeca/Dataset/Fold2_part1/Fold2_part1/14/0.mp4','14/0.mp4')
+df = arquivo_features('D:/Rebeca/Dataset/Fold2_part1/Fold2_part1/14/10.mp4','14/10.mp4')
