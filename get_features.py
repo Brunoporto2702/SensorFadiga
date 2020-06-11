@@ -96,6 +96,24 @@ def plot_graph(df):
         plt.title(coluna)
     plt.show()
 
+plt.style.use('ggplot')
+def grafico_em_tempo_real(x_vec,y1_data,plot,identifier='',pause_time=0.1):
+    if plot==[]:
+        # this is the call to matplotlib that allows dynamic plotting
+        plt.ion()
+        fig = plt.figure(figsize=(7,3))
+        ax = fig.add_subplot(111)
+        plot, = ax.plot(x_vec,y1_data,'-o',alpha=0.8)
+        plt.ylabel('EAR')
+        plt.xlabel('Últimos 1000 frames')
+        plt.title('{}'.format(identifier))
+        plt.show()
+    plot.set_ydata(y1_data)
+    if np.min(y1_data)<=plot.axes.get_ylim()[0] or np.max(y1_data)>=plot.axes.get_ylim()[1]:
+        plt.ylim([np.min(y1_data)-np.std(y1_data),np.max(y1_data)+np.std(y1_data)])
+    plt.pause(pause_time)
+    return plot
+
 def desenha_rosto(rosto, frame):
     mascara_olho_esquerdo = cv2.convexHull(rosto['olho_esquerdo']) #desenhar
     mascara_olho_direito = cv2.convexHull(rosto['olho_direito']) #desenhar
@@ -116,6 +134,9 @@ def arquivo_features(path_to_video, nome_video):
     
     video = FileVideoStream(path_to_video).start()
 
+    plot = []
+    ears = [0]*1000
+
     resultados = []
     try:
         while True: # for frame in video 
@@ -128,21 +149,21 @@ def arquivo_features(path_to_video, nome_video):
                 ear = rosto['ear']
                 distancia_entre_os_labios = rosto['distancia_entre_os_labios']
             else:
-                ear = -1
-                distancia_entre_os_labios = -1
-
-            # print('ear: {}'.format(ear))
-            # print('distancia_entre_os_labios: {}'.format(distancia_entre_os_labios))
-            # print('\n\n')
+                ear = 0
+                distancia_entre_os_labios = 0
 
             resultado = {
                 'ear': ear,
                 'distancia_entre_os_labios': distancia_entre_os_labios
                 }
 
+            ears = ears[1:]
+            ears.append(ear)
+            plot = grafico_em_tempo_real(range(600,1600), ears, plot, identifier='EAR no tempo - video '+nome_video, pause_time=0.01)
+
             resultados.append(resultado) 
             
-            cv2.imshow('Camera', frame)
+            cv2.imshow(nome_video, frame)
             cv2.waitKey(1)
 
     except Exception as e:
@@ -154,4 +175,4 @@ def arquivo_features(path_to_video, nome_video):
     
     return df
 
-df = arquivo_features('D:/Rebeca/Dataset/Fold2_part1/Fold2_part1/14/10.mp4','14/10.mp4')
+df = arquivo_features('D:/Rebeca/Dataset/Fold5_part2/Fold5_part2/59/5.MOV','59/5.MOV')
