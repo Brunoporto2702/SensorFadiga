@@ -65,6 +65,7 @@ def detecta_rosto(frame, predictor, detector):
         #selecionar roi - com haar cascade
         (x,y,w,h) = retangulos_em_volta_da_face[0] #posicao rosto detectado
         frame = frame[y:y+h,x:x+w] #corta frame
+        print(frame.shape)
         frame = imutils.resize(frame, width=300, height=300) #resize frame
         retangulo_face = dlib.rectangle(0, 0, 300, 300) #pega o tamanho 
 
@@ -141,7 +142,9 @@ def arquivo_features(path_to_video, nome_video):
     try:
         while True: # for frame in video 
             frame = video.read()
-            frame = imutils.resize(frame, width=300, height=300)
+            #frame = imutils.resize(frame, width=300, height=300)
+            print(frame.shape)
+
 
             frame, rosto = detecta_rosto(frame, predictor, detector)  #detecta rosto
             if rosto != None:
@@ -161,8 +164,8 @@ def arquivo_features(path_to_video, nome_video):
             ears.append(ear)
             plot = grafico_em_tempo_real(range(600,1600), ears, plot, identifier='EAR no tempo - video '+nome_video, pause_time=0.01)
 
-            resultados.append(resultado) 
-            
+            resultados.append(resultado)
+
             cv2.imshow(nome_video, frame)
             cv2.waitKey(1)
 
