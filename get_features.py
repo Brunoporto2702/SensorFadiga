@@ -1,18 +1,10 @@
-from imutils.video import WebcamVideoStream                                
-from imutils.video import FPS   
-from imutils.video import FileVideoStream                                            
-import imutils
+  import imutils
 import matplotlib.pyplot as plt
-from datetime import datetime
 from scipy.spatial import distance as dist
 import numpy as np
 import dlib
 import cv2
 import pandas as pd
-from imutils import face_utils
-from imutils.face_utils import FaceAligner
-from imutils.face_utils import rect_to_bb
-from skimage.morphology import reconstruction
 from pyexcelerate import Workbook
 import traceback
 
@@ -70,7 +62,7 @@ def detecta_rosto(frame, predictor, detector):
         retangulo_face = dlib.rectangle(0, 0, 300, 300) #pega o tamanho 
 
         formato_rosto = predictor(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), retangulo_face)
-        formato_rosto = face_utils.shape_to_np(formato_rosto)
+        formato_rosto = imutils.face_utils.shape_to_np(formato_rosto)
 
         #dectecta infos
         ear, olho_esquerdo, olho_direito = calcula_ear(formato_rosto) #olhos
@@ -133,7 +125,7 @@ def arquivo_features(path_to_video, nome_video):
     detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
     predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
     
-    video = FileVideoStream(path_to_video).start()
+    video = imutils.video.FileVideoStream(path_to_video).start()
 
     plot = []
     ears = [0]*1000
