@@ -1,4 +1,6 @@
-  import imutils
+import imutils
+from imutils import face_utils
+from imutils.video import FileVideoStream
 import matplotlib.pyplot as plt
 from scipy.spatial import distance as dist
 import numpy as np
@@ -26,8 +28,8 @@ def calcula_ear_para_cada_olho(olho):
     return ear
 
 def calcula_ear(formato_rosto):
-    (lStart, lEnd) = imutils.face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
-    (rStart, rEnd) = imutils.face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
+    (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
+    (rStart, rEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
     olho_esquerdo = formato_rosto[lStart:lEnd]
     olho_direito = formato_rosto[rStart:rEnd]
     ear_olho_esquerdo = calcula_ear_para_cada_olho(olho_esquerdo)
@@ -125,7 +127,7 @@ def arquivo_features(path_to_video, nome_video):
     detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
     predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
     
-    video = imutils.video.FileVideoStream(path_to_video).start()
+    video = FileVideoStream(path_to_video).start()
 
     plot = []
     ears = [0]*1000
@@ -170,4 +172,4 @@ def arquivo_features(path_to_video, nome_video):
     
     return df
 
-df = arquivo_features('D:/Rebeca/Dataset/Fold5_part2/Fold5_part2/59/5.MOV','59/5.MOV')
+df = arquivo_features('E:/Rebeca/Dataset/Fold1_part1/Fold1_part1/06/10.mp4','06/10.mp4')
